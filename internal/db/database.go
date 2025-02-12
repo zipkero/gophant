@@ -1,21 +1,24 @@
 package db
 
 import (
-	"encoding/json"
-	"os"
+	"fmt"
+	"gophant/pkg/utils"
 )
 
 type Database struct {
-	Name     string
-	Tables   []*Table
-	Filename string
+	Name     string   `json:"name"`
+	Tables   []*Table `json:"tables"`
+	Filepath string   `json:"filepath"`
 }
 
-func (db *Database) NewDatabase(name string) *Database {
-	return &Database{
-		Name:   name,
-		Tables: []*Table{},
+func NewDatabase(name string) *Database {
+	database := &Database{
+		Name:     name,
+		Tables:   []*Table{},
+		Filepath: fmt.Sprintf("data/%s.json", name),
 	}
+	database.SaveToFile()
+	return database
 }
 
 func (db *Database) NewTable(name string) {
@@ -24,29 +27,13 @@ func (db *Database) NewTable(name string) {
 }
 
 func (db *Database) LoadFromFile() {
-	file, err := os.Open(db.Filename)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&db)
-	if err != nil {
+	if err := utils.ReadJSON(db.Filepath, db); err != nil {
 		panic(err)
 	}
 }
 
 func (db *Database) SaveToFile() {
-	file, err := os.Create(db.Filename)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	err = encoder.Encode(db)
-	if err != nil {
+	if err := utils.WriteJSON(db.Filepath, db); err != nil {
 		panic(err)
 	}
 }

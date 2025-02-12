@@ -3,7 +3,9 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 )
 
 func FileExists(path string) bool {
@@ -11,9 +13,23 @@ func FileExists(path string) bool {
 	return !os.IsNotExist(err)
 }
 
+func FileCreate(path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating directory: %v", err)
+	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	file.Close()
+	return nil
+}
+
 func ReadJSON(filename string, v interface{}) error {
 	if !FileExists(filename) {
-
+		return fmt.Errorf("file does not exist: %s", filename)
 	}
 
 	file, err := os.Open(filename)
@@ -23,7 +39,7 @@ func ReadJSON(filename string, v interface{}) error {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(v); err != nil {
+	if err := decoder.Decode(v); err != nil && err != io.EOF {
 		return fmt.Errorf("error decoding JSON: %v", err)
 	}
 
