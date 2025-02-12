@@ -11,14 +11,16 @@ type Database struct {
 	Filepath string   `json:"filepath"`
 }
 
-func NewDatabase(name string) *Database {
+func NewDatabase(name string) (*Database, error) {
 	database := &Database{
 		Name:     name,
 		Tables:   []*Table{},
 		Filepath: fmt.Sprintf("data/%s.json", name),
 	}
-	database.SaveToFile()
-	return database
+	if err := database.SaveToFile(); err != nil {
+		return nil, err
+	}
+	return database, nil
 }
 
 func (db *Database) NewTable(name string) {
@@ -26,14 +28,16 @@ func (db *Database) NewTable(name string) {
 	db.Tables = append(db.Tables, table)
 }
 
-func (db *Database) LoadFromFile() {
+func (db *Database) LoadFromFile() error {
 	if err := utils.ReadJSON(db.Filepath, db); err != nil {
-		panic(err)
+		return fmt.Errorf("error reading database file: %v", err)
 	}
+	return nil
 }
 
-func (db *Database) SaveToFile() {
+func (db *Database) SaveToFile() error {
 	if err := utils.WriteJSON(db.Filepath, db); err != nil {
-		panic(err)
+		return fmt.Errorf("error writing database file: %v", err)
 	}
+	return nil
 }
