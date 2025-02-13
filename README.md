@@ -1,3 +1,3 @@
 ### GoPhant
 
-go 기반의 간단 DB
+go 기반의 Simple Embedded Database

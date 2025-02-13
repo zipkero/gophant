@@ -7,6 +7,8 @@ import (
 
 const DatabaseFile = "data/db.json"
 
+var currentDatabase *Database
+
 type Manager struct {
 	Databases map[string]*Database `json:"databases"`
 }
@@ -42,6 +44,14 @@ func (mgr *Manager) SaveToFile() error {
 	return nil
 }
 
+func (mgr *Manager) UseDatabase(name string) error {
+	if _, ok := mgr.Databases[name]; !ok {
+		return fmt.Errorf("database %s not found", name)
+	}
+	currentDatabase = mgr.Databases[name]
+	return nil
+}
+
 func (mgr *Manager) CreateDatabase(name string) error {
 	if _, ok := mgr.Databases[name]; ok {
 		return fmt.Errorf("database %s already exists", name)
@@ -56,5 +66,20 @@ func (mgr *Manager) CreateDatabase(name string) error {
 	if err != nil {
 		return fmt.Errorf("error saving database file: %v", err)
 	}
+	return nil
+}
+
+func (mgr *Manager) CreateTable(name string, columns []*Column) error {
+	if currentDatabase == nil {
+		return fmt.Errorf("database %s not found", name)
+	}
+	if _, ok := currentDatabase.Tables[name]; !ok {
+		return fmt.Errorf("table %s not found", name)
+	}
+	table, err := newTable(name, columns)
+	if err != nil {
+		return fmt.Errorf("error creating table: %v", err)
+	}
+	currentDatabase.Tables[name] = table
 	return nil
 }

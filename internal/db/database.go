@@ -6,15 +6,15 @@ import (
 )
 
 type Database struct {
-	Name     string   `json:"name"`
-	Tables   []*Table `json:"tables"`
-	Filepath string   `json:"filepath"`
+	Name     string            `json:"name"`
+	Tables   map[string]*Table `json:"tables"`
+	Filepath string            `json:"filepath"`
 }
 
 func NewDatabase(name string) (*Database, error) {
 	database := &Database{
 		Name:     name,
-		Tables:   []*Table{},
+		Tables:   make(map[string]*Table),
 		Filepath: fmt.Sprintf("data/%s.json", name),
 	}
 	if err := database.SaveToFile(); err != nil {
@@ -23,9 +23,19 @@ func NewDatabase(name string) (*Database, error) {
 	return database, nil
 }
 
-func (db *Database) NewTable(name string) {
-	table := newTable(name)
-	db.Tables = append(db.Tables, table)
+func (db *Database) NewTable(name string) error {
+	if _, ok := db.Tables[name]; ok {
+		return fmt.Errorf("table %s already exists", name)
+	}
+	table, err := newTable(name)
+	if err != nil {
+		return fmt.Errorf("table %s create error: %v", name, err)
+	}
+	db.Tables[name] = table
+	if err := db.SaveToFile(); err != nil {
+		return fmt.Errorf("failed to save table %s to file: %s", name, err)
+	}
+	return nil
 }
 
 func (db *Database) LoadFromFile() error {
