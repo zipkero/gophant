@@ -23,11 +23,11 @@ func NewDatabase(name string) (*Database, error) {
 	return database, nil
 }
 
-func (db *Database) NewTable(name string) error {
+func (db *Database) NewTable(name string, columns []*Column) error {
 	if _, ok := db.Tables[name]; ok {
 		return fmt.Errorf("table %s already exists", name)
 	}
-	table, err := newTable(name)
+	table, err := newTable(name, columns)
 	if err != nil {
 		return fmt.Errorf("table %s create error: %v", name, err)
 	}
