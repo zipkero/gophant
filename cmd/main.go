@@ -19,4 +19,18 @@ func main() {
 	if err = mng.UseDatabase("test"); err != nil {
 		fmt.Println(err)
 	}
+
+	if err = mng.CreateTable("test", []*db.Column{
+		{
+			Name: "id",
+			Type: db.ColumnTypeInt,
+		},
+		{
+			Name: "name",
+			Type: db.ColumnTypeString,
+		},
+	},
+	); err != nil {
+		fmt.Println(err)
+	}
 }
