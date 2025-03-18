@@ -16,6 +16,9 @@ func main() {
 	if err := mng.CreateDatabase("test"); err != nil {
 		fmt.Println(err)
 	}
+	if err := mng.CreateDatabase("sample"); err != nil {
+		fmt.Println(err)
+	}
 	if err = mng.UseDatabase("test"); err != nil {
 		fmt.Println(err)
 	}

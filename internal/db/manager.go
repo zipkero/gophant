@@ -73,13 +73,30 @@ func (mgr *Manager) CreateTable(name string, columns []*Column) error {
 	if currentDatabase == nil {
 		return fmt.Errorf("database %s not found", name)
 	}
-	if _, ok := currentDatabase.Tables[name]; !ok {
-		return fmt.Errorf("table %s not found", name)
+	if _, ok := currentDatabase.Tables[name]; ok {
+		return fmt.Errorf("table %s already exists", name)
 	}
 	table, err := newTable(name, columns)
 	if err != nil {
 		return fmt.Errorf("error creating table: %v", err)
 	}
 	currentDatabase.Tables[name] = table
+	return nil
+}
+
+func (mgr *Manager) CreateColumn(tableName string, columnName string, columnType ColumnType) error {
+	if currentDatabase == nil {
+		return fmt.Errorf("database %s not found", tableName)
+	}
+	table, ok := currentDatabase.Tables[tableName]
+	if !ok {
+		return fmt.Errorf("table %s not found", tableName)
+	}
+	if err := table.AddColumn(&Column{
+		Name: columnName,
+		Type: columnType,
+	}); err != nil {
+		return fmt.Errorf("error creating column: %v", err)
+	}
 	return nil
 }
