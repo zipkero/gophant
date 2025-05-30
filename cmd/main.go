@@ -6,34 +6,35 @@ import (
 )
 
 func main() {
-	mng, err := db.NewManager()
+	mng, err := db.NewManager("data")
 	if err != nil {
 		panic(err)
 	}
-	if err = mng.UseDatabase("test"); err != nil {
+	var database *db.Database
+	if database, err = mng.GetDatabase("product"); err != nil {
 		fmt.Println(err)
 	}
-	if err := mng.CreateDatabase("test"); err != nil {
+	if err := mng.CreateDatabase("product"); err != nil {
 		fmt.Println(err)
 	}
-	if err := mng.CreateDatabase("sample"); err != nil {
+	if err := mng.CreateDatabase("order"); err != nil {
 		fmt.Println(err)
 	}
-	if err = mng.UseDatabase("test"); err != nil {
+	database, err = mng.GetDatabase("product")
+	if err != nil {
 		fmt.Println(err)
 	}
-
-	if err = mng.CreateTable("test", []*db.Column{
-		{
-			Name: "id",
-			Type: db.ColumnTypeInt,
-		},
-		{
-			Name: "name",
-			Type: db.ColumnTypeString,
-		},
-	},
-	); err != nil {
+	t, err := database.GetTable("product_details")
+	if err != nil {
 		fmt.Println(err)
 	}
+	database, err = mng.GetDatabase("order")
+	if err != nil {
+		fmt.Println(err)
+	}
+	t, err = database.GetTable("order_details")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(t)
 }

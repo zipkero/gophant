@@ -47,6 +47,14 @@ func ReadJSON(filename string, v interface{}) error {
 }
 
 func WriteJSON(filename string, v interface{}) error {
+	dir := filepath.Dir(filename)
+
+	if !FileExists(dir) {
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return fmt.Errorf("error creating directory: %v", err)
+		}
+	}
+
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("error opening file: %v", err)

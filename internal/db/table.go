@@ -1,41 +1,37 @@
 package db
 
-import "fmt"
-
 type Table struct {
-	Name        string
-	Columns     map[string]*Column
-	ColumnOrder []string
-	Storage     *Storage
+	Name    string
+	columns []*Column
+	rows    []*Row
 }
 
+type Row map[string]interface{}
+
 func newTable(name string, columns []*Column) (*Table, error) {
-	storage, err := newStorage(name)
-	if err != nil {
-		return nil, fmt.Errorf("error creating new table: %v", err)
-	}
-
-	colMap := make(map[string]*Column)
-	colOrder := make([]string, len(columns))
-
-	for i, col := range columns {
-		colMap[col.Name] = col
-		colOrder[i] = col.Name
-	}
-
 	return &Table{
-		Name:        name,
-		Columns:     colMap,
-		ColumnOrder: colOrder,
-		Storage:     storage,
+		Name:    name,
+		columns: make([]*Column, 0),
+		rows:    make([]*Row, 0),
 	}, nil
 }
 
-func (t *Table) AddColumn(column *Column) error {
-	if _, ok := t.Columns[column.Name]; ok {
-		return fmt.Errorf("column %s already exists", column.Name)
-	}
-	t.Columns[column.Name] = column
-	t.ColumnOrder = append(t.ColumnOrder, column.Name)
+func (t *Table) AddRow(row *Row) error {
+	return nil
+}
+
+func (t *Table) loadSchema() error {
+	return nil
+}
+
+func (t *Table) loadData() error {
+	return nil
+}
+
+func (t *Table) loadFromFile() error {
+	return nil
+}
+
+func (t *Table) saveToFile() error {
 	return nil
 }

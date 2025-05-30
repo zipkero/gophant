@@ -3,21 +3,26 @@ package db
 import (
 	"fmt"
 	"gophant/pkg/utils"
+	"path/filepath"
 )
 
-const DatabaseFile = "data/db.json"
-
-var currentDatabase *Database
+const (
+	DatabasesFileName   = "gophant.json"
+	DatabasesFolderName = "databases"
+)
 
 type Manager struct {
-	Databases map[string]*Database `json:"databases"`
+	databases map[string]*Database
+	path      string
+	name      string
 }
 
-func NewManager() (*Manager, error) {
+func NewManager(path string) (*Manager, error) {
 	mgr := &Manager{
-		Databases: map[string]*Database{},
+		databases: map[string]*Database{},
+		path:      path,
 	}
-	err := mgr.LoadFromFile()
+	err := mgr.loadFromFile()
 	if err != nil {
 		return nil, err
 	}
@@ -25,78 +30,83 @@ func NewManager() (*Manager, error) {
 	return mgr, nil
 }
 
-func (mgr *Manager) LoadFromFile() error {
-	if !utils.FileExists(DatabaseFile) {
-		if err := utils.FileCreate(DatabaseFile); err != nil {
-			return fmt.Errorf("error creating database file: %v", err)
-		}
-	}
-	if err := utils.ReadJSON(DatabaseFile, mgr); err != nil {
-		return fmt.Errorf("error reading database file: %v", err)
-	}
-	return nil
-}
-
-func (mgr *Manager) SaveToFile() error {
-	if err := utils.WriteJSON(DatabaseFile, mgr); err != nil {
-		return fmt.Errorf("error writing database file: %v", err)
-	}
-	return nil
-}
-
-func (mgr *Manager) UseDatabase(name string) error {
-	if _, ok := mgr.Databases[name]; !ok {
-		return fmt.Errorf("database %s not found", name)
-	}
-	currentDatabase = mgr.Databases[name]
-	return nil
-}
-
 func (mgr *Manager) CreateDatabase(name string) error {
-	if _, ok := mgr.Databases[name]; ok {
+	if _, ok := mgr.databases[name]; ok {
 		return fmt.Errorf("database %s already exists", name)
 	}
-	db, err := NewDatabase(name)
+	db, err := newDatabase(filepath.Join(mgr.path, DatabasesFolderName), name)
 	if err != nil {
 		return fmt.Errorf("error creating database: %v", err)
 	}
-	mgr.Databases[name] = db
 
-	err = mgr.SaveToFile()
+	err = mgr.addDatabase(name, db)
+
 	if err != nil {
 		return fmt.Errorf("error saving database file: %v", err)
 	}
 	return nil
 }
 
-func (mgr *Manager) CreateTable(name string, columns []*Column) error {
-	if currentDatabase == nil {
+func (mgr *Manager) GetDatabase(name string) (*Database, error) {
+	if _, ok := mgr.databases[name]; !ok {
+		return nil, fmt.Errorf("database %s not found", name)
+	}
+	return mgr.databases[name], nil
+}
+
+func (mgr *Manager) DropDatabase(name string) error {
+	if _, ok := mgr.databases[name]; !ok {
 		return fmt.Errorf("database %s not found", name)
 	}
-	if _, ok := currentDatabase.Tables[name]; ok {
-		return fmt.Errorf("table %s already exists", name)
-	}
-	table, err := newTable(name, columns)
-	if err != nil {
-		return fmt.Errorf("error creating table: %v", err)
-	}
-	currentDatabase.Tables[name] = table
+	delete(mgr.databases, name)
 	return nil
 }
 
-func (mgr *Manager) CreateColumn(tableName string, columnName string, columnType ColumnType) error {
-	if currentDatabase == nil {
-		return fmt.Errorf("database %s not found", tableName)
+func (mgr *Manager) loadFromFile() error {
+	metadata := struct {
+		Databases map[string]*Database `json:"databases"`
+	}{
+		Databases: map[string]*Database{},
 	}
-	table, ok := currentDatabase.Tables[tableName]
-	if !ok {
-		return fmt.Errorf("table %s not found", tableName)
+
+	if !utils.FileExists(mgr.path) {
+		mgr.databases = metadata.Databases
+
+		if err := utils.WriteJSON(mgr.getDatabaseFilePath(), &metadata); err != nil {
+			return fmt.Errorf("error creating database file: %v", err)
+		}
+
+		return nil
 	}
-	if err := table.AddColumn(&Column{
-		Name: columnName,
-		Type: columnType,
-	}); err != nil {
-		return fmt.Errorf("error creating column: %v", err)
+
+	if err := utils.ReadJSON(mgr.getDatabaseFilePath(), &metadata); err != nil {
+		return fmt.Errorf("error reading database file: %v", err)
 	}
+
+	mgr.databases = metadata.Databases
+
 	return nil
+}
+
+func (mgr *Manager) saveToFile() error {
+	metadata := struct {
+		Databases map[string]*Database `json:"databases"`
+	}{
+		Databases: mgr.databases,
+	}
+
+	if err := utils.WriteJSON(mgr.getDatabaseFilePath(), metadata); err != nil {
+		return fmt.Errorf("error writing database file: %v", err)
+	}
+
+	return nil
+}
+
+func (mgr *Manager) addDatabase(name string, db *Database) error {
+	mgr.databases[name] = db
+	return mgr.saveToFile()
+}
+
+func (mgr *Manager) getDatabaseFilePath() string {
+	return filepath.Join(mgr.path, DatabasesFileName)
 }
