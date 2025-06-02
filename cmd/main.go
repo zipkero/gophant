@@ -10,8 +10,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	var database *db.Database
-	if database, err = mng.GetDatabase("product"); err != nil {
+
+	var productDb *db.Database
+	var orderDb *db.Database
+	if productDb, err = mng.GetDatabase("product"); err != nil {
 		fmt.Println(err)
 	}
 	if err := mng.CreateDatabase("product"); err != nil {
@@ -20,21 +22,51 @@ func main() {
 	if err := mng.CreateDatabase("order"); err != nil {
 		fmt.Println(err)
 	}
-	database, err = mng.GetDatabase("product")
+
+	productDb, err = mng.GetDatabase("product")
 	if err != nil {
 		fmt.Println(err)
 	}
-	t, err := database.GetTable("product_details")
+
+	t, err := productDb.GetTable("product_details")
 	if err != nil {
 		fmt.Println(err)
 	}
-	database, err = mng.GetDatabase("order")
+
+	t, err = productDb.GetTable("product_details")
+	if err != nil {
+		fmt.Println(err)
+
+		err = productDb.CreateTable("product_details", make([]*db.Column, 0))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	t, err = productDb.GetTable("product_details")
 	if err != nil {
 		fmt.Println(err)
 	}
-	t, err = database.GetTable("order_details")
+
+	orderDb, err = mng.GetDatabase("order")
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	t, err = orderDb.GetTable("order_details")
+	if err != nil {
+		fmt.Println(err)
+
+		err = orderDb.CreateTable("order_details", make([]*db.Column, 0))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	t, err = orderDb.GetTable("order_details")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	fmt.Println(t)
 }

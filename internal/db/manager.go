@@ -22,6 +22,7 @@ func NewManager(path string) (*Manager, error) {
 		databases: map[string]*Database{},
 		path:      path,
 	}
+
 	err := mgr.loadFromFile()
 	if err != nil {
 		return nil, err
@@ -39,18 +40,21 @@ func (mgr *Manager) CreateDatabase(name string) error {
 		return fmt.Errorf("error creating database: %v", err)
 	}
 
-	err = mgr.addDatabase(name, db)
-
-	if err != nil {
-		return fmt.Errorf("error saving database file: %v", err)
-	}
-	return nil
+	mgr.databases[name] = db
+	return mgr.saveToFile()
 }
 
 func (mgr *Manager) GetDatabase(name string) (*Database, error) {
 	if _, ok := mgr.databases[name]; !ok {
-		return nil, fmt.Errorf("database %s not found", name)
+		return nil, fmt.Errorf("db %s not found", name)
 	}
+
+	var err error
+	var db *Database
+	if db, err = loadDatabase(filepath.Join(mgr.path, DatabasesFolderName), name); err != nil {
+		return nil, err
+	}
+	mgr.databases[name] = db
 	return mgr.databases[name], nil
 }
 
@@ -59,6 +63,9 @@ func (mgr *Manager) DropDatabase(name string) error {
 		return fmt.Errorf("database %s not found", name)
 	}
 	delete(mgr.databases, name)
+
+	// TODO: delete database files
+
 	return nil
 }
 
@@ -100,11 +107,6 @@ func (mgr *Manager) saveToFile() error {
 	}
 
 	return nil
-}
-
-func (mgr *Manager) addDatabase(name string, db *Database) error {
-	mgr.databases[name] = db
-	return mgr.saveToFile()
 }
 
 func (mgr *Manager) getDatabaseFilePath() string {
