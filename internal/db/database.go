@@ -19,7 +19,7 @@ func (db *Database) GetTable(name string) (*Table, error) {
 
 	var err error
 	var table *Table
-	if table, err = loadTable(db.Path, name); err != nil {
+	if table, err = loadTable(db.getTablePath(), name); err != nil {
 		return nil, err
 	}
 	db.tables[name] = table
@@ -97,6 +97,10 @@ func (db *Database) saveToFile() error {
 		return fmt.Errorf("error writing database file: %v", err)
 	}
 	return nil
+}
+
+func (db *Database) getTablePath() string {
+	return filepath.Join(db.Path, db.Name)
 }
 
 func (db *Database) getFilePath() string {

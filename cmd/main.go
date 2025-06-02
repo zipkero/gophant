@@ -46,6 +46,16 @@ func main() {
 	t, err = productDb.GetTable("product_details")
 	if err != nil {
 		fmt.Println(err)
+
+		err = productDb.CreateTable("product_details", make([]*db.Column, 0))
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	t, err = productDb.GetTable("product_details")
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	orderDb, err = mng.GetDatabase("order")
